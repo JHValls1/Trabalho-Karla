@@ -1,0 +1,84 @@
+import mysql.connector
+
+config = {
+    'user': 'root',
+    'password': 'senha',
+    'host': 'localhost',
+    'database': 'empresa'
+}
+
+def conectar():
+    return mysql.connector.connect(**config)
+
+def criar_tabela():
+    conexao = conectar()
+    cursor = conexao.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS funcionarios (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            nome VARCHAR(100) NOT NULL,
+            cargo VARCHAR(100),
+            salario DECIMAL(10,2)
+        )
+    ''')
+    conexao.commit()
+    cursor.close()
+    conexao.close()
+    print("Tabela 'funcionarios' criada com sucesso.")
+
+def adicionar_funcionario(nome, cargo, salario):
+    conexao = conectar()
+    cursor = conexao.cursor()
+    cursor.execute(
+        "INSERT INTO funcionarios (nome, cargo, salario) VALUES (%s, %s, %s)",
+        (nome, cargo, salario)
+    )
+    conexao.commit()
+    cursor.close()
+    conexao.close()
+    print(f"Funcionário '{nome}' adicionado com sucesso.")
+
+def listar_funcionarios():
+    conexao = conectar()
+    cursor = conexao.cursor()
+    cursor.execute("SELECT * FROM funcionarios")
+    funcionarios = cursor.fetchall()
+    cursor.close()
+    conexao.close()
+    print("\nLista de Funcionários:")
+    for f in funcionarios:
+        print(f"ID: {f[0]} | Nome: {f[1]} | Cargo: {f[2]} | Salário: R${f[3]:.2f}")
+
+def buscar_por_nome(nome):
+    conexao = conectar()
+    cursor = conexao.cursor()
+    cursor.execute("SELECT * FROM funcionarios WHERE nome LIKE %s", (f"%{nome}%",))
+    resultados = cursor.fetchall()
+    cursor.close()
+    conexao.close()
+    print(f"\nResultados da busca por '{nome}':")
+    if resultados:
+        for f in resultados:
+            print(f"ID: {f[0]} | Nome: {f[1]} | Cargo: {f[2]} | Salário: R${f[3]:.2f}")
+    else:
+        print("Nenhum funcionário encontrado.")
+
+def calcular_media_salarial():
+    conexao = conectar()
+    cursor = conexao.cursor()
+    cursor.execute("SELECT AVG(salario) FROM funcionarios")
+    media = cursor.fetchone()[0]
+    cursor.close()
+    conexao.close()
+    if media:
+        print(f"\nMédia salarial: R${media:.2f}")
+    else:
+        print("\nNenhum funcionário cadastrado ainda.")
+
+if __name__ == "__main__":
+    criar_tabela()
+    adicionar_funcionario("João Silva", "Analista", 3500)
+    adicionar_funcionario("Maria Oliveira", "Gerente", 6200)
+    listar_funcionarios()
+    buscar_por_nome("Maria")
+    calcular_media_salarial()
